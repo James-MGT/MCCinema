@@ -1,0 +1,6 @@
+// TODO
+- Get image width and height. Divide by 128 to the nearest whole n rows and columns.
+    - Use this when no row and column values are specified (i.e /createscreen [link]
+    - The full command /createscreen [width] [height] [link] will be used as a secondary overriding command.
+- Create a 2D array of sub-images with n rows and n columns splitting the image every 128 pixels.
+- Draw to each MapCanvas using correct 2D array index and place on ItemFrame to fill screen.
