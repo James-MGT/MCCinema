@@ -7,8 +7,8 @@ public final class MCCinema extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        getLogger().info("MCCinema has been enabled.");
         Bukkit.getPluginCommand("createimage").setExecutor(new CreateImage(this));
+        getLogger().info("MCCinema has been enabled.");
     }
 
     @Override

@@ -16,10 +16,12 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 public class CreateImage implements CommandExecutor {
 
     private MCCinema plugin;
+    private ArrayList<MapView> mapViews = new ArrayList<>();
 
     public CreateImage(MCCinema plugin) {
         this.plugin = plugin;
@@ -28,41 +30,35 @@ public class CreateImage implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
-        // Check the command sender is a player and not the console
         if (!(sender instanceof Player)) {
             sender.sendMessage("You must be a player to use this command.");
             return true;
         }
 
-        // Safely cast the sender to a Player object
         Player player = (Player) sender;
 
-        // Default width and height values create 4x3 screen
         int width = 0;
         int height = 0;
         int extraWidth = 0;
         int extraHeight = 0;
         String urlLink = "";
 
-        // Syntax validation
         if(args.length != 1) {
-            player.sendMessage(ChatColor.RED + "Incorrect syntax. Usage: /createscreen [url]");
+            player.sendMessage(ChatColor.RED + "Incorrect syntax. Usage: /createimage [url]");
             return true;
         }
 
-        // Set width, height and URL parameters based on number of arguments provided
         urlLink = args[0];
 
         // Retrieve image from URL
         ImageIcon imageIcon = getImage(urlLink);
 
-        // Calculate rows and columns of image
+        // Calculate rows and columns of image and excess image in both axis
         width = (int) Math.ceil(imageIcon.getIconWidth() / 128f);
         height = (int) Math.ceil(imageIcon.getIconHeight() / 128f);
         extraWidth = (int) Math.ceil(imageIcon.getIconWidth() % 128f);
         extraHeight = (int) Math.ceil(imageIcon.getIconHeight() % 128f);
 
-        // Player feedback message
         player.sendMessage("Creating " + ChatColor.GREEN + width + "x" + height + ChatColor.WHITE + " screen with URL: " + ChatColor.GREEN + urlLink);
 
         // Get corner block
@@ -71,7 +67,7 @@ public class CreateImage implements CommandExecutor {
         // Create screen and store each frame
         ItemFrame[] itemFrames = createScreen(width, height, cornerBlock, player.getWorld());
 
-        // 2D array of sub images
+        // Sub images
         Image[][] subImages = new Image[width][height];
 
         // Splice parent image into 2D array of sub images of calculated width and height
@@ -81,7 +77,7 @@ public class CreateImage implements CommandExecutor {
 
         for(int i = 0; i < width; i++) {
             for(int j = 0; j < height; j++) {
-                itemFrames[count].setItem(createMap(player, subImages[i][j], 0, 0));
+                itemFrames[count].setItem(createMap(player, subImages[i][j]));
                 count++;
             }
         }
@@ -91,18 +87,20 @@ public class CreateImage implements CommandExecutor {
 
     public Image[][] spliceImages(ImageIcon parentImage, Image[][] subImages, int width, int height, int extraWidth, int extraHeight) {
 
+        // This feels stupid but I cba to fix it - painting ImageIcon onto BufferedImage (only once tho)
         BufferedImage bufferedImage = new BufferedImage(parentImage.getIconWidth(), parentImage.getIconHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = bufferedImage.createGraphics();
         parentImage.paintIcon(null, g, 0,0);
         g.dispose();
 
+        // Account for extra parts of image that do not fill up a full 128x128 sub image, or it complains
         for(int i = 0; i < width; i++) {
             for(int j = 0; j < height; j++) {
                 if(i == width - 1 && j != height - 1) {
                     subImages[i][j] = bufferedImage.getSubimage(i * 128, j * 128, extraWidth, 128);
                 }else if(i == width - 1 && j == height - 1) {
                     subImages[i][j] = bufferedImage.getSubimage(i * 128, j * 128, extraWidth, extraHeight);
-                }else if(j == height - 1 && i != width - 1) {
+                }else if(i != width - 1 && j == height - 1) {
                     subImages[i][j] = bufferedImage.getSubimage(i * 128, j * 128, 128, extraHeight);
                 }else{
                     subImages[i][j] = bufferedImage.getSubimage(i * 128, j * 128, 128, 128);
@@ -126,7 +124,7 @@ public class CreateImage implements CommandExecutor {
         return imageIcon;
     }
 
-    public ItemStack createMap(Player player, Image image, int x, int y) {
+    public ItemStack createMap(Player player, Image image) {
 
         // Create map ItemStack
         ItemStack map = new ItemStack(Material.FILLED_MAP);
@@ -143,20 +141,31 @@ public class CreateImage implements CommandExecutor {
         // Clear renderers from current MapView
         mapView.getRenderers().clear();
 
-        // Add a custom MapRendered
+        // Add a custom MapRenderer
         mapView.addRenderer(new MapRenderer() {
             @Override
             public void render(MapView map, MapCanvas canvas, Player player) {
+
+                // Optimisation - only render once
+                if(mapViews.contains(map)) {
+                    return;
+                }
+
+                mapViews.add(map);
+
+                // Black background until I center the image so it looks nicer
                 for(int i = 0; i < 128; i++) {
                     for(int j = 0; j < 128; j++) {
                         canvas.setPixel(i, j, MapPalette.matchColor(0, 0, 0));
                     }
                 }
+
+                // Sub image
                 canvas.drawImage(0, 0, image);
             }
         });
 
-        // Set MapMeta to custom MapView
+        // Set MapMeta's MapView to custom MapView
         mapMeta.setMapView(mapView);
 
         // Set new map's MapMeta to custom MapMeta
@@ -171,6 +180,7 @@ public class CreateImage implements CommandExecutor {
         ItemFrame[] itemFrames = new ItemFrame[width * height];
         int indexCounter = 0;
 
+        // Fix this for different player facings
         for(int i = 0; i < width; i++) {
             for(int j = 0; j < height; j++) {
                 itemFrames[indexCounter] = (ItemFrame) world.spawnEntity(cornerBlock.getLocation().add(i, -j, 1), EntityType.ITEM_FRAME);

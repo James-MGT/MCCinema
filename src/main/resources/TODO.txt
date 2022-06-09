@@ -1,4 +1,3 @@
 // TODO
 - Center the image in the screen using xBuffer and yBuffer values.
 - Refactor and optimisation.
-- Update plugin YAML
