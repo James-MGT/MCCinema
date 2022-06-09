@@ -1,11 +1,11 @@
 name: MCCinema
 version: '${project.version}'
-main: me.snuks.mccinema.mccinema.MCCinema
+main: me.snuks.mccinema.main.MCCinema
 api-version: 1.18
 authors: [ Snuks ]
 description: Browse pictures and videos in game.
 commands:
-  createscreen:
-    description: Create a screen from a placed corner ItemFrame.
-    usage: /createscreen [width] [height]
+  createimage:
+    description: Create a screen with an image provided by a URL.
+    usage: /createimage [URL]
 

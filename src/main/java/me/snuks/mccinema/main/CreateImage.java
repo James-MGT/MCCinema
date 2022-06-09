@@ -1,4 +1,4 @@
-package me.snuks.mccinema.mccinema;
+package me.snuks.mccinema.main;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -13,17 +13,18 @@ import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.*;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Random;
 
-public class CreateScreen implements CommandExecutor {
+public class CreateImage implements CommandExecutor {
 
     private MCCinema plugin;
-    public CreateScreen(MCCinema plugin) {
+
+    public CreateImage(MCCinema plugin) {
         this.plugin = plugin;
     }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
@@ -37,24 +38,29 @@ public class CreateScreen implements CommandExecutor {
         Player player = (Player) sender;
 
         // Default width and height values create 4x3 screen
-        int width = 4;
-        int height = 3;
+        int width = 0;
+        int height = 0;
+        int extraWidth = 0;
+        int extraHeight = 0;
         String urlLink = "";
 
         // Syntax validation
-        if(args.length != 1 && args.length != 3) {
-            player.sendMessage(ChatColor.RED + "Incorrect syntax. Usage: /createscreen <width> <height> [url]");
+        if(args.length != 1) {
+            player.sendMessage(ChatColor.RED + "Incorrect syntax. Usage: /createscreen [url]");
             return true;
         }
 
         // Set width, height and URL parameters based on number of arguments provided
-        if(args.length == 1) {
-            urlLink = args[0];
-        }else{
-            width = Integer.parseInt(args[0]);
-            height = Integer.parseInt(args[1]);
-            urlLink = args[2];
-        }
+        urlLink = args[0];
+
+        // Retrieve image from URL
+        ImageIcon imageIcon = getImage(urlLink);
+
+        // Calculate rows and columns of image
+        width = (int) Math.ceil(imageIcon.getIconWidth() / 128f);
+        height = (int) Math.ceil(imageIcon.getIconHeight() / 128f);
+        extraWidth = (int) Math.ceil(imageIcon.getIconWidth() % 128f);
+        extraHeight = (int) Math.ceil(imageIcon.getIconHeight() % 128f);
 
         // Player feedback message
         player.sendMessage("Creating " + ChatColor.GREEN + width + "x" + height + ChatColor.WHITE + " screen with URL: " + ChatColor.GREEN + urlLink);
@@ -65,28 +71,62 @@ public class CreateScreen implements CommandExecutor {
         // Create screen and store each frame
         ItemFrame[] itemFrames = createScreen(width, height, cornerBlock, player.getWorld());
 
-        for(int i = 0; i < itemFrames.length; i++) {
-            itemFrames[i].setItem(createMap(player, urlLink));
+        // 2D array of sub images
+        Image[][] subImages = new Image[width][height];
+
+        // Splice parent image into 2D array of sub images of calculated width and height
+        subImages = spliceImages(imageIcon, subImages, width, height, extraWidth, extraHeight);
+
+        int count = 0;
+
+        for(int i = 0; i < width; i++) {
+            for(int j = 0; j < height; j++) {
+                itemFrames[count].setItem(createMap(player, subImages[i][j], 0, 0));
+                count++;
+            }
         }
 
         return true;
     }
 
-    public Image getImage(String urlLink) {
+    public Image[][] spliceImages(ImageIcon parentImage, Image[][] subImages, int width, int height, int extraWidth, int extraHeight) {
 
-        ImageIcon imageIcon = null;
+        BufferedImage bufferedImage = new BufferedImage(parentImage.getIconWidth(), parentImage.getIconHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = bufferedImage.createGraphics();
+        parentImage.paintIcon(null, g, 0,0);
+        g.dispose();
+
+        for(int i = 0; i < width; i++) {
+            for(int j = 0; j < height; j++) {
+                if(i == width - 1 && j != height - 1) {
+                    subImages[i][j] = bufferedImage.getSubimage(i * 128, j * 128, extraWidth, 128);
+                }else if(i == width - 1 && j == height - 1) {
+                    subImages[i][j] = bufferedImage.getSubimage(i * 128, j * 128, extraWidth, extraHeight);
+                }else if(j == height - 1 && i != width - 1) {
+                    subImages[i][j] = bufferedImage.getSubimage(i * 128, j * 128, 128, extraHeight);
+                }else{
+                    subImages[i][j] = bufferedImage.getSubimage(i * 128, j * 128, 128, 128);
+                }
+            }
+        }
+
+        return subImages;
+    }
+
+    public ImageIcon getImage(String urlLink) {
+
+        ImageIcon imageIcon;
+
         try {
             imageIcon = new ImageIcon(new URL(urlLink));
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
 
-        Image image = imageIcon.getImage();
-
-        return imageIcon.getImage();
+        return imageIcon;
     }
 
-    public ItemStack createMap(Player player, String link) {
+    public ItemStack createMap(Player player, Image image, int x, int y) {
 
         // Create map ItemStack
         ItemStack map = new ItemStack(Material.FILLED_MAP);
@@ -94,7 +134,7 @@ public class CreateScreen implements CommandExecutor {
         // Get MapMeta from MapView
         MapMeta mapMeta = (MapMeta) map.getItemMeta();
 
-        // Get MapView from MapMeta
+        // Get MapView from new Map
         MapView mapView = Bukkit.createMap(player.getWorld());
 
         // Configure MapView
@@ -107,11 +147,12 @@ public class CreateScreen implements CommandExecutor {
         mapView.addRenderer(new MapRenderer() {
             @Override
             public void render(MapView map, MapCanvas canvas, Player player) {
-                if(getImage(link) != null) {
-                    canvas.drawImage(0, 0, getImage(link));
-                }else{
-                    player.sendMessage(ChatColor.RED + "Invalid image URL.");
+                for(int i = 0; i < 128; i++) {
+                    for(int j = 0; j < 128; j++) {
+                        canvas.setPixel(i, j, MapPalette.matchColor(0, 0, 0));
+                    }
                 }
+                canvas.drawImage(0, 0, image);
             }
         });
 
@@ -138,49 +179,6 @@ public class CreateScreen implements CommandExecutor {
         }
 
         return itemFrames;
-    }
-
-    // Just messing around - really laggy
-    public void loopColors(ItemFrame[] itemFrames) {
-
-        Random random = new Random();
-
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                int r = random.nextInt(255);
-                int g = random.nextInt(255);
-                int b = random.nextInt(255);
-                for(int i = 0; i < itemFrames.length; i++) {
-                    if(itemFrames[i] != null) {
-                        MapMeta mapMeta = (MapMeta) itemFrames[i].getItem().getItemMeta();
-                        MapView mapView = mapMeta.getMapView();
-                        mapView.getRenderers().clear();
-                        updateRenderer(mapView, r, g, b);
-                        mapMeta.setMapView(mapView);
-                        itemFrames[i].getItem().setItemMeta(mapMeta);
-                    }
-                }
-
-            }
-        }, 0, 20);
-
-    }
-
-    public MapView updateRenderer(MapView mapView, int r, int g, int b) {
-
-        mapView.addRenderer(new MapRenderer() {
-            @Override
-            public void render(MapView map, MapCanvas canvas, Player player) {
-                for(int i = 0; i < 128; i++) {
-                    for(int j = 0; j < 128; j++) {
-                        canvas.setPixel(i, j, MapPalette.matchColor(new Color(r, g, b)));
-                    }
-                }
-            }
-        });
-
-        return mapView;
     }
 
 }
