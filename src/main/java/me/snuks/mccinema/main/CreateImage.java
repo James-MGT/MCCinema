@@ -37,11 +37,8 @@ public class CreateImage implements CommandExecutor {
 
         Player player = (Player) sender;
 
-        int width = 0;
-        int height = 0;
-        int extraWidth = 0;
-        int extraHeight = 0;
-        String urlLink = "";
+        int width, height, extraWidth, extraHeight;
+        String urlLink;
 
         if(args.length != 1) {
             player.sendMessage(ChatColor.RED + "Incorrect syntax. Usage: /createimage [url]");

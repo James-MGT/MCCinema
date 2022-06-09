@@ -4,11 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f2e7c9bf-30ca-4bbf-8e86-2542c64024db" name="Changes" comment="Add image support. Clean some code.">
+    <list default="true" id="f2e7c9bf-30ca-4bbf-8e86-2542c64024db" name="Changes" comment="Tidy up.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/snuks/mccinema/main/CreateImage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/snuks/mccinema/main/CreateImage.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/snuks/mccinema/main/MCCinema.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/snuks/mccinema/main/MCCinema.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/TODO.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/TODO.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -142,7 +140,7 @@
       <workItem from="1654462322802" duration="5228000" />
       <workItem from="1654550923780" duration="6887000" />
       <workItem from="1654621442602" duration="2047000" />
-      <workItem from="1654733173437" duration="7372000" />
+      <workItem from="1654733173437" duration="7592000" />
     </task>
     <task id="LOCAL-00001" summary="Initial commit - snapshot version">
       <created>1654556772114</created>
@@ -172,7 +170,14 @@
       <option name="project" value="LOCAL" />
       <updated>1654741901899</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Tidy up.">
+      <created>1654743697001</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1654743697001</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -208,6 +213,7 @@
     <MESSAGE value="Initial commit - snapshot version" />
     <MESSAGE value="Remove test images - clean up." />
     <MESSAGE value="Add image support. Clean some code." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add image support. Clean some code." />
+    <MESSAGE value="Tidy up." />
+    <option name="LAST_COMMIT_MESSAGE" value="Tidy up." />
   </component>
 </project>
